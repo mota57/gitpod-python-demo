@@ -4,3 +4,5 @@ vscode:
     - ms-python.pylint
     - ms-python.black-formatter
     - vscodevim.vim
+    - almenon.arepl
+    - HUSAM.brio-terminal-yellow
