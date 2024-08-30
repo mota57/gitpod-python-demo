@@ -1,6 +1,7 @@
-from fastapi import FastAPI
 from enum import Enum
-from pydantic import BaseModel
+from typing import Annotated
+from fastapi import FastAPI, Path, Body
+from pydantic import BaseModel, Field 
 
 app = FastAPI()
 
@@ -12,10 +13,44 @@ async def root():
 # example using BaseModel
 class ItemBase(BaseModel):
     name: str
-    description: str | None = None
-    price: float
+    description: str | None = Field(
+        default=None, 
+        title="The description of the item", 
+        description="Description length(0, 300)",
+        max_length=300,
+        min_length=10
+    )
+    price: float = Field(gt=0, description="The price must be greater than zero")
     tax: float | None = 0.0
 
+class User(BaseModel):
+    username: str
+    full_name: str | None = None
+
+
+
+@app.put("/items/update_item/{item_id}")
+async def update_item_v1(
+    item_id: Annotated[int, Path(title="The ID of the item to get", ge=0, le=1000)],
+    q: str | None = None,
+    item: ItemBase | None = None,
+):
+    results = {"item_id": item_id}
+    if q:
+        results.update({"q": q})
+    if item:
+        results.update({"item": item})
+    return results
+
+@app.put("/items/update_item/v2/{item_id}")
+async def update_item_v2(item_id: int, item: ItemBase, user: User, importance: Annotated[int, Body()]):
+    results = {"item_id": item_id, "item": item, "user": user, 'importance': importance}
+    return results
+
+@app.put("/items/update_item/v3/")
+async def update_item_v3(item: ItemBase):
+    results = {**item.model_dump()}
+    return results
 
 @app.post("/items/test-post-request/{item_id}")
 def test_post_request(item_id:int, item: ItemBase, q : str | None = None):
